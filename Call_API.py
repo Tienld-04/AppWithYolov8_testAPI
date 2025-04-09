@@ -19,7 +19,6 @@ model = YOLO(MODEL_PATH)
 STATIC_DIR = "static_img"
 os.makedirs(STATIC_DIR, exist_ok=True)
 
-# Hàm kết nối cơ sở dữ liệu
 def get_db_connection():
     conn = sqlite3.connect("data_images.db")
     conn.row_factory = sqlite3.Row  # Để trả về dữ liệu dưới dạng dictionary
@@ -36,30 +35,41 @@ def detect_image():
             return jsonify({"error": "File rỗng"}), 400
 
         image = cv2.imdecode(np.frombuffer(file.read(), np.uint8), cv2.IMREAD_COLOR)
+        # file.read() đọc dữ nhị phân từ file
+        #np.uint8 chuyển đổi dữ liệu thành mảng số nguyên 8 bit
+        #cv2.IMREAD_COLOR đọc ảnh màu
+        #cv2.imdecode giải mã ảnh từ mảng byte thành định dạng ảnh OpenCV
+        #np.frombuffer tạo mảng numpy từ buffer byte
         if image is None:
             return jsonify({"error": "Không thể đọc file ảnh"}), 400
 
-        results = model(image)
-        detections = []
+        results = model(image) # Nhận diện đối tượng trong ảnh với mô hình YOLO
+        # Kết quả trả về là một danh sách các đối tượng được phát hiện trong ảnh
+        detections = [] # Danh sách chứa thông tin về các đối tượng được phát hiện
         for r in results:
             for box in r.boxes:
-                x1, y1, x2, y2 = map(int, box.xyxy[0])
-                label = r.names[int(box.cls)]
-                confidence = float(box.conf)
-                cv2.rectangle(image, (x1, y1), (x2, y2), (0, 255, 0), 2)
-                cv2.putText(image, f"{label} {confidence:.2f}",
-                            (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 2)
-                detections.append({"label": label, "confidence": confidence, "box": [x1, y1, x2, y2]})
-
+                x1, y1, x2, y2 = map(int, box.xyxy[0]) # Chuyển đổi tọa độ box thành số nguyên
+                # Tọa độ box là một danh sách chứa 4 giá trị: [x1, y1, x2, y2]
+                label = r.names[int(box.cls)] # Lấy tên nhãn của đối tượng từ mô hình
+                confidence = float(box.conf) # Lấy độ tin cậy của đối tượng từ mô hình
+                cv2.rectangle(image, (x1, y1), (x2, y2), (0, 255, 0), 2) # Vẽ hình chữ nhật quanh đối tượng
+                cv2.putText(image, f"{label} {confidence:.2f}", (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.75, (0, 0, 255), 2)
+                # Vẽ nhãn và độ tin cậy lên ảnh
+                #cv2.putText vẽ văn bản lên ảnh
+                #cv2.FONT_HERSHEY_SIMPLEX là kiểu chữ
+                detections.append({"label": label, "confidence": confidence, "box": [x1, y1, x2, y2]}) # Thêm thông tin vào danh sách detections
+                
         # Chuyển ảnh thành base64 để gửi về frontend
-        _, buffer = cv2.imencode(".jpg", image)
-        image_base64 = base64.b64encode(buffer).decode("utf-8")
-
+        _, buffer = cv2.imencode(".jpg", image) #cv2.imencode mã hóa ảnh thành định dạng JPEG
+        #cv2.imencode trả về một tuple, phần tử đầu tiên là mã hóa thành công hay không, phần tử thứ hai là buffer chứa dữ liệu ảnh
+        image_base64 = base64.b64encode(buffer).decode("utf-8") # Chuyển đổi buffer thành chuỗi base64
+        # Chuyển đổi dữ liệu nhị phân thành chuỗi base64 để gửi về frontend
+        #base64.b64encode mã hóa dữ liệu nhị phân thành chuỗi base64
         return jsonify({
-            "image_data": image_base64,
-            "detections": detections,
+            "image_data": image_base64, # Chuỗi base64 của ảnh đã nhận diện
+            "detections": detections, # Danh sách chứa thông tin về các đối tượng được phát hiện
             "message": "Nhận diện thành công"
-        }), 200
+        }), 200 
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
@@ -74,12 +84,16 @@ def detect_video():
         if file.filename == "":
             return jsonify({"error": "File rỗng"}), 400
 
-        temp_video_path = os.path.join(STATIC_DIR, f"temp_{uuid.uuid4().hex}.mp4")
+        temp_video_path = os.path.join(STATIC_DIR, f"temp_{uuid.uuid4().hex}.mp4") 
+        # os.path.join kết hợp đường dẫn thư mục với tên file
+        # uuid.uuid4().hex tạo một chuỗi ngẫu nhiên để đặt tên file tạm thời
+        # uuid là một thư viện trong Python để tạo ra các ID duy nhất
+        # uuid4() tạo một UUID ngẫu nhiên
         file.save(temp_video_path)
 
-        cap = cv2.VideoCapture(temp_video_path)
+        cap = cv2.VideoCapture(temp_video_path) # Mở video bằng OpenCV
         if not cap.isOpened():
-            os.remove(temp_video_path)
+            os.remove(temp_video_path) # Nếu không mở được video, xóa file tạm thời
             return jsonify({"error": "Không thể mở file video"}), 400
 
         ret, frame = cap.read()
@@ -168,7 +182,35 @@ def get_images():
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+# lấy ảnh theo id
+@app.route("/images/<int:id>", methods=["GET"])
+def get_image_id(id):
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM images WHERE id = ?", (id,))
+        row = cursor.fetchone()
+        conn.close()
 
+        if not row:
+            return jsonify({"error": "Không tìm thấy ảnh với ID này"}), 404
+
+        image_data = {
+            "id": row["id"],
+            "file_path": row["file_path"],
+            "detections": json.loads(row["detections"]) if row["detections"] else [],
+            "notes": row["notes"]
+        }
+
+        return jsonify({
+            "image": image_data,
+            "message": f"Lấy ảnh với ID: {id} thành công"
+        }), 200
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+# xóa ảnh theo id
 @app.route("/images/<int:id>", methods=["DELETE"])
 def delete_image(id):
     try:

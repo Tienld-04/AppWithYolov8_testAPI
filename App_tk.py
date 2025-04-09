@@ -11,8 +11,8 @@ import numpy as np
 import threading
 import json
 
-API_IMAGE_URL = "http://127.0.0.1:5000/detect/image/"
-API_VIDEO_URL = "http://127.0.0.1:5000/detect/video/"
+API_IMAGE_URL = "http://127.0.0.1:5000/detect/image/"   # API POST để nhận diện ảnh
+API_VIDEO_URL = "http://127.0.0.1:5000/detect/video/"   # API POST để nhận diện video
 API_GET_IMAGES_URL = "http://127.0.0.1:5000/images/"  # API GET để lấy danh sách ảnh
 API_DELETE_IMAGE_URL = "http://127.0.0.1:5000/images/"  # API DELETE để xóa ảnh
 API_UPDATE_IMAGE_URL = "http://127.0.0.1:5000/images/"  # API PUT để cập nhật ghi chú
@@ -41,18 +41,18 @@ class AppWithYolo:
         self.content_frame.pack(side=tk.LEFT, fill="both", expand=True, padx=5, pady=5)
 
         # Tiêu đề
-        self.label_title = Label(self.content_frame, text="App with Yolov8",
-                                 font=("Arial", 16, "bold"), bg="#f0f0f0", fg="#333")
+        self.label_title = Label(self.content_frame, text="App with Yolov8", font=("Arial", 16, "bold"), bg="#f0f0f0", fg="#333")
         self.label_title.pack(pady=(5, 2))
 
         # Frame cho canvas
         self.canvas_frame = tk.Frame(self.content_frame, bg="#f0f0f0")
         self.canvas_frame.pack(pady=2)
 
-        self.canvas = Canvas(self.canvas_frame, width=800, height=400, bg="gray", highlightthickness=1,
-                             highlightbackground="#ccc")
+        ## Canvas để hiển thị ảnh
+        self.canvas = Canvas(self.canvas_frame, width=800, height=400, bg="gray", highlightthickness=1, highlightbackground="#ccc")
         self.canvas.pack(side=tk.LEFT)
 
+        #
         self.v_scrollbar = Scrollbar(self.canvas_frame, orient="vertical", command=self.canvas.yview)
         self.v_scrollbar.pack(side=tk.RIGHT, fill="y")
         self.h_scrollbar = Scrollbar(self.content_frame, orient="horizontal", command=self.canvas.xview)
@@ -181,7 +181,8 @@ class AppWithYolo:
         # Biến lưu detections hiện tại để sử dụng khi chụp lại
         self.current_detections = []
 
-    def set_background_image(self):
+    
+    def set_background_image(self): # Đặt ảnh nền cho canvas
         try:
             img = Image.open(BACKGROUND_IMAGE_PATH)
             original_width, original_height = img.size
@@ -204,7 +205,7 @@ class AppWithYolo:
         except Exception as e:
             self.label_img.config(image=None, text="Chưa có nội dung")
 
-    def start_live_camera(self):
+    def start_live_camera(self): # Bắt đầu camera
         if self.camera_running or self.video_running:
             return
 
@@ -230,7 +231,7 @@ class AppWithYolo:
         self.thread.daemon = True
         self.thread.start()
 
-    def stop_live_camera(self):
+    def stop_live_camera(self): # Dừng camera
         if not self.camera_running:
             return
 
@@ -248,7 +249,7 @@ class AppWithYolo:
         self.result_text.delete(1.0, tk.END)
         self.result_text.insert(tk.END, "Camera đã dừng.")
 
-    def process_camera(self):
+    def process_camera(self):  # Xử lý camera
         while self.camera_running:
             ret, frame = self.cap.read()
             if not ret:
@@ -284,7 +285,7 @@ class AppWithYolo:
         if self.cap:
             self.cap.release()
 
-    def select_image(self):
+    def select_image(self):   # Chọn ảnh
         if self.camera_running or self.video_running:
             return
         file_path = filedialog.askopenfilename(filetypes=[("Image files", "*.jpg *.png *.jpeg")])
@@ -292,7 +293,7 @@ class AppWithYolo:
             return
         self.process_file(file_path, API_IMAGE_URL, "ảnh")
 
-    def select_video(self):
+    def select_video(self):    # Chọn video
         if self.camera_running or self.video_running:
             return
         file_path = filedialog.askopenfilename(filetypes=[("Video files", "*.mp4 *.avi *.mov")])
@@ -300,7 +301,7 @@ class AppWithYolo:
             return
         self.play_video(file_path)
 
-    def play_video(self, file_path):
+    def play_video(self, file_path): # Phát video
         self.cap = cv2.VideoCapture(file_path)
         if not self.cap.isOpened():
             self.result_text.delete(1.0, tk.END)
@@ -323,7 +324,7 @@ class AppWithYolo:
         self.thread.daemon = True
         self.thread.start()
 
-    def stop_video(self):
+    def stop_video(self): # Dừng video
         if not self.video_running:
             return
 
@@ -341,7 +342,7 @@ class AppWithYolo:
         self.result_text.delete(1.0, tk.END)
         self.result_text.insert(tk.END, "Video đã dừng.")
 
-    def process_video(self):
+    def process_video(self): # Xử lý video
         while self.video_running:
             ret, frame = self.cap.read()
             if not ret:
@@ -378,7 +379,7 @@ class AppWithYolo:
         if self.cap:
             self.cap.release()
 
-    def process_file(self, file_path, api_url, file_type):
+    def process_file(self, file_path, api_url, file_type): # Xử lý file ảnh hoặc video
         try:
             with open(file_path, "rb") as file:
                 response = requests.post(api_url, files={"file": file})
@@ -404,7 +405,7 @@ class AppWithYolo:
             self.result_text.insert(tk.END, f"Lỗi: {str(e)}")
             self.btn_capture.config(state="disabled")
 
-    def show_image_from_base64(self, image_base64):
+    def show_image_from_base64(self, image_base64): # Hiển thị ảnh từ base64
         try:
             image_data = base64.b64decode(image_base64)
             img = Image.open(BytesIO(image_data))
@@ -429,7 +430,7 @@ class AppWithYolo:
         except Exception as e:
             self.label_img.config(image=None, text=f"Lỗi tải nội dung: {str(e)}")
 
-    def show_detections(self, detections, file_type):
+    def show_detections(self, detections, file_type): # Hiển thị kết quả nhận diện
         self.result_text.delete(1.0, tk.END)
         if not detections:
             self.result_text.insert(tk.END, f"Không phát hiện được đối tượng nào trong {file_type}.")
@@ -456,7 +457,7 @@ class AppWithYolo:
             if notes:
                 self.result_text.insert(tk.END, f"Ghi chú: {notes}\n")
 
-    def capture_image(self):
+    def capture_image(self): # Lưu ảnh đã nhận diện
         if not self.current_image_data:
             self.result_text.delete(1.0, tk.END)
             self.result_text.insert(tk.END, "Không có ảnh để chụp lại!")
@@ -489,7 +490,7 @@ class AppWithYolo:
             self.result_text.delete(1.0, tk.END)
             self.result_text.insert(tk.END, f"Lỗi khi lưu ảnh: {str(e)}")
 
-    def view_captured_images(self):
+    def view_captured_images(self):  # Xem ảnh đã lưu
         if self.camera_running or self.video_running:
             return
         try:
@@ -528,23 +529,21 @@ class AppWithYolo:
             self.result_text.delete(1.0, tk.END)
             self.result_text.insert(tk.END, f"Lỗi khi gọi API: {str(e)}")
 
-    def update_notes(self):
+    def update_notes(self): # Cập nhật ghi chú cho ảnh đã lưu
         if self.current_image_index < 0 or self.current_image_index >= len(self.captured_images):
             return
-
         image_id, _, _, current_notes = self.captured_images[self.current_image_index]
-
         # Tạo cửa sổ nhập ghi chú mới
         notes_window = Toplevel(self.root)
         notes_window.title(f"Cập nhật ghi chú cho ảnh ID: {image_id}")
         notes_window.geometry("300x150")
 
-        Label(notes_window, text="Nhập ghi chú mới:", font=("Arial", 10)).pack(pady=5)
-        notes_entry = Entry(notes_window, width=40, font=("Arial", 10))
-        notes_entry.pack(pady=5)
+        Label(notes_window, text="Nhập ghi chú mới:", font=("Arial", 10)).pack(pady=5) 
+        notes_entry = Entry(notes_window, width=40, font=("Arial", 10)) 
+        notes_entry.pack(pady=5) 
         notes_entry.insert(0, current_notes if current_notes else "")
 
-        def save_notes():
+        def save_notes(): # Lưu ghi chú mới
             new_notes = notes_entry.get().strip()
             try:
                 # Gửi request PUT để cập nhật ghi chú
@@ -571,7 +570,7 @@ class AppWithYolo:
 
         Button(notes_window, text="Lưu", font=("Arial", 10), bg="#4CAF50", fg="white", command=save_notes).pack(pady=10)
 
-    def delete_image(self):
+    def delete_image(self): # Xóa ảnh đã lưu
         if self.current_image_index < 0 or self.current_image_index >= len(self.captured_images):
             return
 
@@ -611,9 +610,8 @@ class AppWithYolo:
             self.result_text.delete(1.0, tk.END)
             self.result_text.insert(tk.END, f"Lỗi khi gọi API: {str(e)}")
 
-    def display_thumbnails(self):
+    def display_thumbnails(self): # Hiển thị thumbnail của ảnh đã lưu
         self.clear_thumbnails()
-
         x_position = 5
         thumbnail_size = (80, 60)
         for idx, (image_id, file_path, _, _) in enumerate(self.captured_images):
@@ -642,18 +640,18 @@ class AppWithYolo:
         self.thumbnail_inner_frame.update_idletasks()
         self.thumbnail_canvas.config(scrollregion=self.thumbnail_canvas.bbox("all"))
 
-    def clear_thumbnails(self):
+    def clear_thumbnails(self): # Xóa thumbnail hiện tại
         for thumb_frame, _, _ in self.thumbnail_labels:
             thumb_frame.destroy()
         self.thumbnail_labels = []
         self.thumbnail_canvas.config(scrollregion=(0, 0, 0, 0))
 
-    def select_thumbnail(self, index):
+    def select_thumbnail(self, index): # Chọn thumbnail
         self.current_image_index = index
         self.show_captured_image()
         self.update_navigation_buttons()
 
-    def show_captured_image(self):
+    def show_captured_image(self): # Hiển thị ảnh đã lưu
         if self.current_image_index < 0 or self.current_image_index >= len(self.captured_images):
             return
 
@@ -684,19 +682,19 @@ class AppWithYolo:
             self.result_text.delete(1.0, tk.END)
             self.result_text.insert(tk.END, f"Lỗi khi tải ảnh: {str(e)}")
 
-    def show_prev_image(self):
+    def show_prev_image(self): # Hiển thị ảnh trước đó
         if self.current_image_index > 0:
             self.current_image_index -= 1
             self.show_captured_image()
             self.update_navigation_buttons()
 
-    def show_next_image(self):
+    def show_next_image(self): # Hiển thị ảnh tiếp theo
         if self.current_image_index < len(self.captured_images) - 1:
             self.current_image_index += 1
             self.show_captured_image()
             self.update_navigation_buttons()
 
-    def update_navigation_buttons(self):
+    def update_navigation_buttons(self): # Cập nhật trạng thái các nút điều hướng
         self.btn_prev.config(state="normal" if self.current_image_index > 0 else "disabled")
         self.btn_next.config(state="normal" if self.current_image_index < len(self.captured_images) - 1 else "disabled")
         self.btn_delete.config(state="normal" if self.captured_images else "disabled")
