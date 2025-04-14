@@ -26,6 +26,13 @@ def get_db_connection():
 
 @app.route("/detect/image/", methods=["POST"])
 def detect_image():
+    # Cách hàm detect_image hoạt động:
+    # 1. Nhận file ảnh từ request
+    # 2. Đọc file ảnh bằng OpenCV
+    # 3. Nhận diện đối tượng trong ảnh bằng mô hình YOLO
+    # 4. Vẽ hình chữ nhật và nhãn lên ảnh
+    # 5. Chuyển ảnh thành base64
+    # 6. Trả về dữ liệu ảnh và thông tin nhận diện
     try:
         if "file" not in request.files:
             return jsonify({"error": "Không tìm thấy file trong request"}), 400
@@ -76,6 +83,16 @@ def detect_image():
 
 @app.route("/detect/video/", methods=["POST"])
 def detect_video():
+    # Cách hàm detect_video hoạt động:
+    # 1. Nhận file video từ request
+    # 2. Lưu file video tạm thời
+    # 3. Mở video bằng OpenCV
+    # 4. Đọc frame đầu tiên từ video
+    # 5. Nhận diện đối tượng trong frame đầu tiên bằng mô hình YOLO
+    # 6. Vẽ hình chữ nhật và nhãn lên frame
+    # 7. Chuyển frame thành base64
+    # 8. Xóa file video tạm thời
+    # 9. Trả về dữ liệu ảnh và thông tin nhận diện
     try:
         if "file" not in request.files:
             return jsonify({"error": "Không tìm thấy file trong request"}), 400
@@ -132,6 +149,13 @@ def detect_video():
 
 @app.route("/save_image/", methods=["POST"])
 def save_image():
+    #Cách hàm save_image hoạt động:
+    # 1. Nhận dữ liệu từ request (file_path và detections)
+    # 2. Kiểm tra xem file_path và detections có tồn tại không
+    # 3. Kết nối đến cơ sở dữ liệu SQLite
+    # 4. Thực hiện truy vấn SQL để lưu dữ liệu vào bảng images
+    # 5. Đóng kết nối đến cơ sở dữ liệu
+    # 6. Trả về ID của ảnh đã lưu và thông báo thành công
     try:
         data = request.get_json()
         file_path = data.get("file_path")
@@ -158,6 +182,12 @@ def save_image():
 
 @app.route("/images/", methods=["GET"])
 def get_images():
+    # Cách hàm get_images hoạt động:
+    # 1. Kết nối đến cơ sở dữ liệu SQLite
+    # 2. Thực hiện truy vấn SQL để lấy tất cả dữ liệu từ bảng images
+    # 3. Đóng kết nối đến cơ sở dữ liệu
+    # 4. Chuyển đổi dữ liệu thành danh sách JSON
+    # 5. Trả về danh sách ảnh và thông báo thành công
     try:
         conn = get_db_connection()
         cursor = conn.cursor()
@@ -185,6 +215,13 @@ def get_images():
 # lấy ảnh theo id
 @app.route("/images/<int:id>", methods=["GET"])
 def get_image_id(id):
+    # Cách hàm get_image_id hoạt động:
+    # 1. Kết nối đến cơ sở dữ liệu SQLite
+    # 2. Thực hiện truy vấn SQL để lấy dữ liệu từ bảng images theo ID
+    # 3. Đóng kết nối đến cơ sở dữ liệu
+    # 4. Chuyển đổi dữ liệu thành JSON
+    # 5. Trả về dữ liệu ảnh và thông báo thành công
+    # 6. Nếu không tìm thấy ảnh theo ID, trả về thông báo lỗi
     try:
         conn = get_db_connection()
         cursor = conn.cursor()
@@ -213,6 +250,14 @@ def get_image_id(id):
 # xóa ảnh theo id
 @app.route("/images/<int:id>", methods=["DELETE"])
 def delete_image(id):
+    # Cách hàm delete_image hoạt động:
+    # 1. Kết nối đến cơ sở dữ liệu SQLite
+    # 2. Thực hiện truy vấn SQL để lấy dữ liệu từ bảng images theo ID
+    # 3. Nếu không tìm thấy ảnh theo ID, trả về thông báo lỗi
+    # 4. Nếu tìm thấy ảnh, xóa file ảnh trong thư mục static
+    # 5. Xóa bản ghi trong cơ sở dữ liệu
+    # 6. Đóng kết nối đến cơ sở dữ liệu
+    # 7. Trả về thông báo thành công
     try:
         conn = get_db_connection()
         cursor = conn.cursor()
@@ -240,6 +285,14 @@ def delete_image(id):
 
 @app.route("/images/<int:id>", methods=["PUT"])
 def update_image_notes(id):
+    # Cách hàm update_image_notes hoạt động:
+    # 1. Kết nối đến cơ sở dữ liệu SQLite
+    # 2. Thực hiện truy vấn SQL để lấy dữ liệu từ bảng images theo ID
+    # 3. Nếu không tìm thấy ảnh theo ID, trả về thông báo lỗi
+    # 4. Nếu tìm thấy ảnh, lấy dữ liệu từ request (notes mới)
+    # 5. Cập nhật ghi chú trong cơ sở dữ liệu
+    # 6. Đóng kết nối đến cơ sở dữ liệu
+    # 7. Trả về thông báo thành công và dữ liệu ảnh đã cập nhật
     try:
         conn = get_db_connection()
         cursor = conn.cursor()
