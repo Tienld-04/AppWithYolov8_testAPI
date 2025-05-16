@@ -11,14 +11,14 @@ import numpy as np
 import threading
 import json
 
-API_IMAGE_URL = "http://127.0.0.1:5000/detect/image/"   # API POST để nhận diện ảnh
-API_VIDEO_URL = "http://127.0.0.1:5000/detect/video/"   # API POST để nhận diện video
-API_GET_IMAGES_URL = "http://127.0.0.1:5000/images/"  # API GET để lấy danh sách ảnh
-API_DELETE_IMAGE_URL = "http://127.0.0.1:5000/images/"  # API DELETE để xóa ảnh
-API_UPDATE_IMAGE_URL = "http://127.0.0.1:5000/images/"  # API PUT để cập nhật ghi chú
-API_SAVE_IMAGE_URL = "http://127.0.0.1:5000/save_image/"  # API POST để lưu ảnh
+API_IMAGE_URL = "http://127.0.0.1:5000/detect/image/"
+API_VIDEO_URL = "http://127.0.0.1:5000/detect/video/"
+API_GET_IMAGES_URL = "http://127.0.0.1:5000/images/"
+API_DELETE_IMAGE_URL = "http://127.0.0.1:5000/images/"
+API_UPDATE_IMAGE_URL = "http://127.0.0.1:5000/images/"
+API_SAVE_IMAGE_URL = "http://127.0.0.1:5000/save_image/"
 STATIC_DIR = "static_img"
-BACKGROUND_IMAGE_PATH = "images/a.jpg"  # Thay đổi thành đường dẫn chính xác
+BACKGROUND_IMAGE_PATH = "images/a.jpg"
 
 class AppWithYolo:
     def __init__(self, root):
@@ -26,33 +26,24 @@ class AppWithYolo:
         self.root.title("App lỏ by Tiến and Dương")
         self.root.geometry("1000x600")
 
-        # Xóa phần gọi init_db() vì CSDL đã được tạo bởi script riêng
-
-        # Frame chính để chia bố cục
         self.main_frame = tk.Frame(root, bg="#f0f0f0")
         self.main_frame.pack(fill="both", expand=True)
 
-        # Frame cho các nút (bên trái)
         self.button_frame = tk.Frame(self.main_frame, width=120, bg="#d9e6f2")
         self.button_frame.pack(side=tk.LEFT, fill="y", padx=(5, 0), pady=5)
 
-        # Frame cho nội dung (canvas và kết quả)
         self.content_frame = tk.Frame(self.main_frame, bg="#f0f0f0")
         self.content_frame.pack(side=tk.LEFT, fill="both", expand=True, padx=5, pady=5)
 
-        # Tiêu đề
         self.label_title = Label(self.content_frame, text="App with Yolov8", font=("Arial", 16, "bold"), bg="#f0f0f0", fg="#333")
         self.label_title.pack(pady=(5, 2))
 
-        # Frame cho canvas
         self.canvas_frame = tk.Frame(self.content_frame, bg="#f0f0f0")
         self.canvas_frame.pack(pady=2)
 
-        ## Canvas để hiển thị ảnh
         self.canvas = Canvas(self.canvas_frame, width=800, height=400, bg="gray", highlightthickness=1, highlightbackground="#ccc")
         self.canvas.pack(side=tk.LEFT)
 
-        #
         self.v_scrollbar = Scrollbar(self.canvas_frame, orient="vertical", command=self.canvas.yview)
         self.v_scrollbar.pack(side=tk.RIGHT, fill="y")
         self.h_scrollbar = Scrollbar(self.content_frame, orient="horizontal", command=self.canvas.xview)
@@ -62,12 +53,10 @@ class AppWithYolo:
         self.label_img = Label(self.canvas, bg="gray")
         self.canvas.create_window((0, 0), window=self.label_img, anchor="nw")
 
-        # Lưu kích thước canvas để dùng cho background
         self.canvas_width = 800
         self.canvas_height = 400
         self.set_background_image()
 
-        # Frame cho danh sách ảnh đã lưu (thumbnail)
         self.thumbnail_frame = tk.Frame(self.content_frame, bg="#f0f0f0")
         self.thumbnail_frame.pack(fill="x", pady=(2, 0))
 
@@ -83,7 +72,6 @@ class AppWithYolo:
         self.thumbnail_inner_frame = tk.Frame(self.thumbnail_canvas, bg="#f0f0f0")
         self.thumbnail_canvas.create_window((0, 0), window=self.thumbnail_inner_frame, anchor="nw")
 
-        # Khu vực hiển thị kết quả nhận diện (bên dưới thumbnail)
         self.result_frame = tk.Frame(self.content_frame, bg="#f0f0f0")
         self.result_frame.pack(fill="x", pady=(5, 0))
 
@@ -99,7 +87,6 @@ class AppWithYolo:
         self.scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
         self.result_text.config(yscrollcommand=self.scrollbar.set)
 
-        # Frame cho các nút điều hướng (Ảnh trước, Ảnh sau, Xóa, Cập nhật ghi chú)
         self.nav_frame = tk.Frame(self.content_frame, bg="#f0f0f0")
         self.nav_frame.pack(fill="x", pady=(2, 0))
 
@@ -436,7 +423,7 @@ class AppWithYolo:
             self.result_text.insert(tk.END, f"Không phát hiện được đối tượng nào trong {file_type}.")
             return
 
-        header = f"Kết quả nhận diện từ {file_type}:\n\n"
+        header = f"Kết quả nhận diện từ {file_type}: \n\n"
         self.result_text.insert(tk.END, header)
 
         for idx, detection in enumerate(detections, 1):
